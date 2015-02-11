@@ -124,12 +124,17 @@ static NSString *newSHA1String(const char *bytes, size_t length) {
     assert(length <= UINT32_MAX);
     CC_SHA1(bytes, (CC_LONG)length, md);
     
+#if TARGET_OS_IPHONE
+    return [[NSData dataWithBytes:md length:CC_SHA1_DIGEST_LENGTH] base64EncodedStringWithOptions:0];
+#else
     return [[NSData dataWithBytes:md length:CC_SHA1_DIGEST_LENGTH] base64Encoding];
+#endif
+    
 }
 
 @implementation NSData (SRWebSocket)
 
-- (NSString *)stringBySHA1ThenBase64Encoding;
+- (NSString *)stringBySHA1ThenBase64Encoding
 {
     return newSHA1String(self.bytes, self.length);
 }
@@ -139,7 +144,7 @@ static NSString *newSHA1String(const char *bytes, size_t length) {
 
 @implementation NSString (SRWebSocket)
 
-- (NSString *)stringBySHA1ThenBase64Encoding;
+- (NSString *)stringBySHA1ThenBase64Encoding
 {
     return newSHA1String(self.UTF8String, self.length);
 }
