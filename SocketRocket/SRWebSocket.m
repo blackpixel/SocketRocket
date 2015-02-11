@@ -1129,7 +1129,7 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
             [self _performDelegateBlock:^{
                 typeof(self) strongSelf = weakSelf;
                 if ([strongDelegate respondsToSelector:@selector(webSocket:didCloseWithCode:reason:wasClean:)]) {
-                    [strongDelegate webSocket:strongSelf didCloseWithCode:_closeCode reason:_closeReason wasClean:YES];
+                    [strongDelegate webSocket:strongSelf didCloseWithCode:strongSelf->_closeCode reason:strongSelf->_closeReason wasClean:YES];
                 }
             }];
         }
@@ -1441,9 +1441,9 @@ static const size_t SRFrameHeaderOverhead = 32;
                 if (self.readyState >= SR_CLOSING) {
                     return;
                 }
-                assert(_readBuffer);
+                assert(self->_readBuffer);
                 
-                if (self.readyState == SR_CONNECTING && aStream == _inputStream) {
+                if (self.readyState == SR_CONNECTING && aStream == self->_inputStream) {
                     [self didConnect];
                 }
                 [self _pumpWriting];
@@ -1455,8 +1455,8 @@ static const size_t SRFrameHeaderOverhead = 32;
                 SRFastLog(@"NSStreamEventErrorOccurred %@ %@", aStream, [[aStream streamError] copy]);
                 /// TODO specify error better!
                 [self _failWithError:aStream.streamError];
-                _readBufferOffset = 0;
-                [_readBuffer setLength:0];
+                self->_readBufferOffset = 0;
+                [self->_readBuffer setLength:0];
                 break;
                 
             }
@@ -1469,11 +1469,11 @@ static const size_t SRFrameHeaderOverhead = 32;
                 } else {
                     if (self.readyState != SR_CLOSED) {
                         self.readyState = SR_CLOSED;
-                        _selfRetain = nil;
+                        self->_selfRetain = nil;
                     }
 
-                    if (!_sentClose && !_failed) {
-                        _sentClose = YES;
+                    if (!self->_sentClose && !self->_failed) {
+                        self->_sentClose = YES;
                         // If we get closed in this state it's probably not clean because we should be sending this when we send messages
                         typeof(self.delegate) strongDelegate = self.delegate;
                         __weak typeof(self) weakSelf = self;
@@ -1494,13 +1494,13 @@ static const size_t SRFrameHeaderOverhead = 32;
                 const int bufferSize = 2048;
                 uint8_t buffer[bufferSize];
                 
-                while (_inputStream.hasBytesAvailable) {
-                    NSInteger bytes_read = [_inputStream read:buffer maxLength:bufferSize];
+                while (self->_inputStream.hasBytesAvailable) {
+                    NSInteger bytes_read = [self->_inputStream read:buffer maxLength:bufferSize];
                     
                     if (bytes_read > 0) {
-                        [_readBuffer appendBytes:buffer length:(NSUInteger)bytes_read];
+                        [self->_readBuffer appendBytes:buffer length:(NSUInteger)bytes_read];
                     } else if (bytes_read < 0) {
-                        [self _failWithError:_inputStream.streamError];
+                        [self _failWithError:self->_inputStream.streamError];
                     }
                     
                     if (bytes_read != bufferSize) {

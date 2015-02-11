@@ -694,9 +694,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_IMPLICIT_SIGN_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				DSTROOT = /tmp/SocketRocket.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SocketRocket/SocketRocket-Prefix.pch";
+				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(DEVELOPER_DIR)/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator7.1.sdk/usr/lib/system\"",
@@ -711,9 +715,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_IMPLICIT_SIGN_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				DSTROOT = /tmp/SocketRocket.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SocketRocket/SocketRocket-Prefix.pch";
+				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(DEVELOPER_DIR)/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator7.1.sdk/usr/lib/system\"",
