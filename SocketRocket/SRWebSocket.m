@@ -472,9 +472,10 @@ static __strong NSData *CRLFCRLF;
         [self _readFrameNew];
     }
 
+    typeof(self.delegate) strongDelegate = self.delegate;
     [self _performDelegateBlock:^{
-        if ([self.delegate respondsToSelector:@selector(webSocketDidOpen:)]) {
-            [self.delegate webSocketDidOpen:self];
+        if ([strongDelegate respondsToSelector:@selector(webSocketDidOpen:)]) {
+            [strongDelegate webSocketDidOpen:self];
         };
     }];
 }
@@ -682,9 +683,10 @@ static __strong NSData *CRLFCRLF;
     dispatch_async(_workQueue, ^{
         if (self.readyState != SR_CLOSED) {
             _failed = YES;
+            typeof(self.delegate) strongDelegate = self.delegate;
             [self _performDelegateBlock:^{
-                if ([self.delegate respondsToSelector:@selector(webSocket:didFailWithError:)]) {
-                    [self.delegate webSocket:self didFailWithError:error];
+                if ([strongDelegate respondsToSelector:@selector(webSocket:didFailWithError:)]) {
+                    [strongDelegate webSocket:self didFailWithError:error];
                 }
             }];
 
@@ -726,6 +728,16 @@ static __strong NSData *CRLFCRLF;
     });
 }
 
+- (void)sendPing:(NSData *)data;
+{
+    NSAssert(self.readyState == SR_OPEN, @"Invalid State: Cannot call send: until connection is open");
+    // TODO: maybe not copy this for performance
+    data = [data copy] ?: [NSData data]; // It's okay for a ping to be empty
+    dispatch_async(_workQueue, ^{
+        [self _sendFrameWithOpcode:SROpCodePing data:data];
+    });
+}
+
 - (void)handlePing:(NSData *)pingData
 {
     // Need to pingpong this off _callbackQueue first to make sure messages happen in order
@@ -739,9 +751,12 @@ static __strong NSData *CRLFCRLF;
 - (void)handlePong:(NSData *)pongData
 {
     SRFastLog(@"Received pong");
+    typeof(self.delegate) strongDelegate = self.delegate;
+    __weak typeof(self) weakSelf = self;
     [self _performDelegateBlock:^{
-        if ([self.delegate respondsToSelector:@selector(webSocket:didReceivePong:)]) {
-            [self.delegate webSocket:self didReceivePong:pongData];
+        typeof(self) strongSelf = weakSelf;
+        if ([strongDelegate respondsToSelector:@selector(webSocket:didReceivePong:)]) {
+            [strongDelegate webSocket:strongSelf didReceivePong:pongData];
         }
     }];
 }
@@ -749,8 +764,11 @@ static __strong NSData *CRLFCRLF;
 - (void)_handleMessage:(id)message
 {
     SRFastLog(@"Received message");
+    typeof(self.delegate) strongDelegate = self.delegate;
+    __weak typeof(self) weakSelf = self;
     [self _performDelegateBlock:^{
-        [self.delegate webSocket:self didReceiveMessage:message];
+        typeof(self) strongSelf = weakSelf;
+        [strongDelegate webSocket:strongSelf didReceiveMessage:message];
     }];
 }
 
@@ -1101,9 +1119,12 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
         }
         
         if (!_failed) {
+            typeof(self.delegate) strongDelegate = self.delegate;
+            __weak typeof(self) weakSelf = self;
             [self _performDelegateBlock:^{
-                if ([self.delegate respondsToSelector:@selector(webSocket:didCloseWithCode:reason:wasClean:)]) {
-                    [self.delegate webSocket:self didCloseWithCode:_closeCode reason:_closeReason wasClean:YES];
+                typeof(self) strongSelf = weakSelf;
+                if ([strongDelegate respondsToSelector:@selector(webSocket:didCloseWithCode:reason:wasClean:)]) {
+                    [strongDelegate webSocket:strongSelf didCloseWithCode:_closeCode reason:_closeReason wasClean:YES];
                 }
             }];
         }
@@ -1142,7 +1163,7 @@ static const char CRLFCRLFBytes[] = {'\r', '\n', '\r', '\n'};
     [self _readUntilBytes:CRLFCRLFBytes length:sizeof(CRLFCRLFBytes) callback:dataHandler];
 }
 
-- (void)_readUntilBytes:(const void *)bytes length:(size_t)length callback:(data_callback)dataHandler;
+- (void)_readUntilBytes:(const void *)bytes length:(size_t)length callback:(data_callback)dataHandler
 {
     // TODO optimize so this can continue from where we last searched
     stream_scanner consumer = ^size_t(NSData *data) {
@@ -1449,9 +1470,12 @@ static const size_t SRFrameHeaderOverhead = 32;
                     if (!_sentClose && !_failed) {
                         _sentClose = YES;
                         // If we get closed in this state it's probably not clean because we should be sending this when we send messages
+                        typeof(self.delegate) strongDelegate = self.delegate;
+                        __weak typeof(self) weakSelf = self;
                         [self _performDelegateBlock:^{
-                            if ([self.delegate respondsToSelector:@selector(webSocket:didCloseWithCode:reason:wasClean:)]) {
-                                [self.delegate webSocket:self didCloseWithCode:SRStatusCodeGoingAway reason:@"Stream end encountered" wasClean:NO];
+                            typeof(self) strongSelf = weakSelf;
+                            if ([strongDelegate respondsToSelector:@selector(webSocket:didCloseWithCode:reason:wasClean:)]) {
+                                [strongDelegate webSocket:strongSelf didCloseWithCode:SRStatusCodeGoingAway reason:@"Stream end encountered" wasClean:NO];
                             }
                         }];
                     }
