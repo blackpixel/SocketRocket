@@ -487,14 +487,14 @@ static __strong NSData *CRLFCRLF;
         _receivedHTTPHeaders = CFHTTPMessageCreateEmpty(NULL, NO);
     }
                         
-    [self _readUntilHeaderCompleteWithCallback:^(SRWebSocket *self,  NSData *data) {
-        CFHTTPMessageAppendBytes(_receivedHTTPHeaders, (const UInt8 *)data.bytes, data.length);
+    [self _readUntilHeaderCompleteWithCallback:^(SRWebSocket *blockSelf,  NSData *data) {
+        CFHTTPMessageAppendBytes(blockSelf->_receivedHTTPHeaders, (const UInt8 *)data.bytes, data.length);
         
         if (CFHTTPMessageIsHeaderComplete(_receivedHTTPHeaders)) {
-            SRFastLog(@"Finished reading headers %@", CFBridgingRelease(CFHTTPMessageCopyAllHeaderFields(_receivedHTTPHeaders)));
-            [self _HTTPHeadersDidFinish];
+            SRFastLog(@"Finished reading headers %@", CFBridgingRelease(CFHTTPMessageCopyAllHeaderFields(blockSelf->_receivedHTTPHeaders)));
+            [blockSelf _HTTPHeadersDidFinish];
         } else {
-            [self _readHTTPHeader];
+            [blockSelf _readHTTPHeader];
         }
     }];
 }
@@ -728,7 +728,7 @@ static __strong NSData *CRLFCRLF;
     });
 }
 
-- (void)sendPing:(NSData *)data;
+- (void)sendPing:(NSData *)data
 {
     NSAssert(self.readyState == SR_OPEN, @"Invalid State: Cannot call send: until connection is open");
     // TODO: maybe not copy this for performance
