@@ -488,7 +488,7 @@ static __strong NSData *CRLFCRLF;
     }
                         
     [self _readUntilHeaderCompleteWithCallback:^(SRWebSocket *blockSelf,  NSData *data) {
-        CFHTTPMessageAppendBytes(blockSelf->_receivedHTTPHeaders, (const UInt8 *)data.bytes, (NSUInteger)data.length);
+        CFHTTPMessageAppendBytes(blockSelf->_receivedHTTPHeaders, (const UInt8 *)data.bytes, (CFIndex)data.length);
         
         if (CFHTTPMessageIsHeaderComplete(blockSelf->_receivedHTTPHeaders)) {
             SRFastLog(@"Finished reading headers %@", CFBridgingRelease(CFHTTPMessageCopyAllHeaderFields(blockSelf->_receivedHTTPHeaders)));
@@ -993,7 +993,7 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
     assert((_currentFrameCount == 0 && _currentFrameOpcode == 0) || (_currentFrameCount > 0 && _currentFrameOpcode > 0));
 
     [self _addConsumerWithDataLength:2 callback:^(SRWebSocket *blockSelf, NSData *data) {
-        __block frame_header header = {0, 0};
+        __block frame_header header = {0, NO, 0, 0};
         
         const uint8_t *headerBuffer = data.bytes;
         assert(data.length >= 2);
@@ -1075,15 +1075,16 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
 
 - (void)_readFrameNew
 {
-    dispatch_async(_workQueue, ^{
-        [_currentFrameData setLength:0];
+    typeof(self) strongSelf = self;
+    dispatch_async(strongSelf->_workQueue, ^{
+        [strongSelf->_currentFrameData setLength:0];
         
-        _currentFrameOpcode = 0;
-        _currentFrameCount = 0;
-        _readOpCount = 0;
-        _currentStringScanPosition = 0;
+        strongSelf->_currentFrameOpcode = 0;
+        strongSelf->_currentFrameCount = 0;
+        strongSelf->_readOpCount = 0;
+        strongSelf->_currentStringScanPosition = 0;
         
-        [self _readFrameContinue];
+        [strongSelf _readFrameContinue];
     });
 }
 
@@ -1099,7 +1100,7 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
              return;
         }
         
-        _outputBufferOffset += (NSInteger)bytesWritten;
+        _outputBufferOffset += (NSUInteger)bytesWritten;
         
         if (_outputBufferOffset > 4096 && _outputBufferOffset > (_outputBuffer.length >> 1)) {
             _outputBuffer = [[NSMutableData alloc] initWithBytes:(char *)_outputBuffer.bytes + _outputBufferOffset length:_outputBuffer.length - _outputBufferOffset];
@@ -1276,7 +1277,7 @@ static const char CRLFCRLFBytes[] = {'\r', '\n', '\r', '\n'};
                         });
                         return didWork;
                     } else {
-                        _currentStringScanPosition += valid_utf8_size;
+                        _currentStringScanPosition += (uint32_t)valid_utf8_size;
                     }
                 } 
                 
@@ -1497,7 +1498,7 @@ static const size_t SRFrameHeaderOverhead = 32;
                     NSInteger bytes_read = [_inputStream read:buffer maxLength:bufferSize];
                     
                     if (bytes_read > 0) {
-                        [_readBuffer appendBytes:buffer length:bytes_read];
+                        [_readBuffer appendBytes:buffer length:(NSUInteger)bytes_read];
                     } else if (bytes_read < 0) {
                         [self _failWithError:_inputStream.streamError];
                     }
@@ -1695,7 +1696,7 @@ static inline int32_t validate_dispatch_data_partial_string(NSData *data) {
         }
     }
     
-    if (size != -1 && ![[NSString alloc] initWithBytesNoCopy:(char *)[data bytes] length:size encoding:NSUTF8StringEncoding freeWhenDone:NO]) {
+    if (size != -1 && ![[NSString alloc] initWithBytesNoCopy:(char *)[data bytes] length:(NSUInteger)size encoding:NSUTF8StringEncoding freeWhenDone:NO]) {
         size = -1;
     }
     
