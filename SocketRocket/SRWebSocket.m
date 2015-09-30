@@ -17,7 +17,7 @@
 
 #import "SRWebSocket.h"
 
-#if TARGET_OS_IPHONE
+#if TARGET_IOS
 #define HAS_ICU
 #endif
 
@@ -25,7 +25,7 @@
 #import <unicode/utf8.h>
 #endif
 
-#if TARGET_OS_IPHONE
+#if defined(TARGET_IOS) || defined(TARGET_OS_TV)
 #import <Endian.h>
 #else
 #import <CoreServices/CoreServices.h>
