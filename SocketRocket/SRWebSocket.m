@@ -25,7 +25,7 @@
 #import <unicode/utf8.h>
 #endif
 
-#if defined(TARGET_IOS) || defined(TARGET_OS_TV)
+#if TARGET_OS_IOS || TARGET_OS_TV
 #import <Endian.h>
 #else
 #import <CoreServices/CoreServices.h>
